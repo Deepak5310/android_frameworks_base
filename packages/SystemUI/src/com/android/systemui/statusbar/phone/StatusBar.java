@@ -216,6 +216,7 @@ import com.android.systemui.statusbar.SysuiStatusBarStateController;
 import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.charging.WiredChargingRippleController;
 import com.android.systemui.statusbar.events.SystemStatusAnimationScheduler;
+import com.android.systemui.statusbar.VisualizerView;
 import com.android.systemui.statusbar.notification.DynamicPrivacyController;
 import com.android.systemui.statusbar.notification.NotificationActivityStarter;
 import com.android.systemui.statusbar.notification.NotificationLaunchAnimatorControllerProvider;
@@ -577,6 +578,8 @@ public class StatusBar extends SystemUI implements DemoMode,
     private final NotificationLockscreenUserManager mLockscreenUserManager;
     private final NotificationRemoteInputManager mRemoteInputManager;
     private boolean mWallpaperSupported;
+
+    private VisualizerView mVisualizerView;
 
     private final BroadcastReceiver mWallpaperChangedReceiver = new BroadcastReceiver() {
         @Override
@@ -1302,6 +1305,8 @@ public class StatusBar extends SystemUI implements DemoMode,
             backdrop.setScaleX(scale);
             backdrop.setScaleY(scale);
         });
+
+        mVisualizerView = (VisualizerView) mNotificationShadeWindowView.findViewById(R.id.visualizerview);
 
         mNotificationPanelViewController.setUserSetupComplete(mUserSetup);
 
@@ -3790,6 +3795,7 @@ public class StatusBar extends SystemUI implements DemoMode,
                 && visibleNotOccludedOrWillBe);
 
         mNotificationPanelViewController.setDozing(mDozing, animate, mWakeUpTouchLocation);
+        mVisualizerView.setDozing(mDozing);
         updateQsExpansionEnabled();
         Trace.endSection();
     }
@@ -3960,6 +3966,7 @@ public class StatusBar extends SystemUI implements DemoMode,
         checkBarModes();
         updateScrimController();
         mPresenter.updateMediaMetaData(false, mState != StatusBarState.KEYGUARD);
+        mVisualizerView.setStatusBarState(newState);
         updateKeyguardState();
         Trace.endSection();
     }
@@ -4241,12 +4248,14 @@ public class StatusBar extends SystemUI implements DemoMode,
         @Override
         public void onScreenTurnedOn() {
             mScrimController.onScreenTurnedOn();
+            mVisualizerView.setVisible(true);
         }
 
         @Override
         public void onScreenTurnedOff() {
             mFalsingCollector.onScreenOff();
             mScrimController.onScreenTurnedOff();
+            mVisualizerView.setVisible(false);
             updateIsKeyguard();
         }
     };
@@ -4557,6 +4566,10 @@ public class StatusBar extends SystemUI implements DemoMode,
         updateLightRevealScrimVisibility();
 
         Trace.endSection();
+    }
+
+    public VisualizerView getVisualizer() {
+        return mVisualizerView;
     }
 
     public boolean isKeyguardShowing() {
